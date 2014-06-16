@@ -71,7 +71,16 @@ namespace DbConnectionProfiler
             // StoredProcedure
             if (cmd.CommandType == CommandType.StoredProcedure)
             {
-                builder.Append("EXEC " + cmd.CommandText);
+                var result = prms.FirstOrDefault(x => x.Direction == ParameterDirection.ReturnValue);
+                if (result != null)
+                {
+                    builder.AppendLine("DECLARE @" + result.ParameterName + " " + result.SqlDbType);
+                    builder.Append("EXEC @" + result.ParameterName + " = " + cmd.CommandText);
+                }
+                else
+                {
+                    builder.Append("EXEC " + cmd.CommandText);
+                }
                 for (var i = 0; i < prms.Count; i++)
                 {
                     if (prms[i].Direction != ParameterDirection.Input && prms[i].Direction != ParameterDirection.InputOutput)
@@ -81,6 +90,11 @@ namespace DbConnectionProfiler
                         builder.Append(',');
 
                     builder.AppendFormat(" @{0}={1}", prms[i].ParameterName, GetParameterValue(prms[i]));
+                }
+                if (result != null)
+                {
+                    builder.AppendLine();
+                    builder.AppendLine("SELECT @" + result.ParameterName);
                 }
             }
             // Sql
