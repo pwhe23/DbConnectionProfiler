@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
@@ -81,16 +82,17 @@ namespace DbConnectionProfiler
                 {
                     builder.Append("EXEC " + cmd.CommandText);
                 }
-                for (var i = 0; i < prms.Count; i++)
+
+                var args = new List<string>();
+                foreach (var prm in prms)
                 {
-                    if (prms[i].Direction != ParameterDirection.Input && prms[i].Direction != ParameterDirection.InputOutput)
+                    if (prm.Direction != ParameterDirection.Input && prm.Direction != ParameterDirection.InputOutput)
                         continue;
 
-                    if (i > 0)
-                        builder.Append(',');
-
-                    builder.AppendFormat(" @{0}={1}", prms[i].ParameterName, GetParameterValue(prms[i]));
+                    args.Add(string.Format(" @{0}={1}", prm.ParameterName, GetParameterValue(prm)));
                 }
+                builder.Append(string.Join(",", args));
+
                 if (result != null)
                 {
                     builder.AppendLine();
